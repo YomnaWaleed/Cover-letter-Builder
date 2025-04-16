@@ -16,18 +16,17 @@ A FastAPI application that generates professional cover letters using Groq's LLM
 
 ## Installation
     1- clone Reposirtory
-    ```bash 
+```bash 
       git clone https://github.com/YomnaWaleed/Cover-letter-Builder.git
       cd Cover-letter-Builder
     
-    ```
+```
 
     2- Create and activate a virtual environment
 
     3- Install dependencies
-    ```bash
-    pip install -r requirements.txt
-    ```
+  
+```bash pip install -r requirements.txt ```
 
     4- Create a .env file and add your Groq API key
 
@@ -35,7 +34,5 @@ A FastAPI application that generates professional cover letters using Groq's LLM
 ## Usage 
   Running the API
     Start the FastAPI server:
-    ```bash 
-    uvicorn main:app --reload
-    ```
+    ```bash uvicorn main:app --reload ```
    
