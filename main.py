@@ -15,11 +15,11 @@ class UserJobRequest(BaseModel):
 def generate_cover_letter(request: UserJobRequest):
     try:
         # Generate the cover letter parts
-        result = generate_cover_letter_parts(request.dict())
+        cleaned_paragraphs, final_text = generate_cover_letter_parts(request.dict())
         
         # Return the merged cover letter as a single string
         return {
-            result["merged_cover_letter"]
+            final_text
         }
     except Exception as e:
         # In case of errors, return the exception details

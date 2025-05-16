@@ -13,28 +13,36 @@ if not GROQ_API_KEY:
 client = Groq(api_key=GROQ_API_KEY)
 
 
-def generate_cover_letter_parts(user_job_json: dict) -> dict:
+def generate_cover_letter_parts(user_job_json: dict) -> tuple:
     user = user_job_json["user"]
     job = user_job_json["job"]
 
     prompt = f"""
-      You are an expert cover letter writer. Based on the following structured user and job information in JSON format, generate three professional and engaging paragraphs of a cover letter: Opening, Body, and Closing.
+      You are an expert cover letter writer. Based on the following structured user and job information in JSON format, generate three professional and engaging paragraphs of a cover letter: Opening, Body, and Closing .
 
       1. **Opening Paragraph**:
-        In the opening paragraph tell how you learned about the position. You may, for example, know of a job through: Qaddemly website
+        In the opening paragraph tell how you learned about the position. You may, for example, know of a job through: Qaddemly website  . 
 
       2. **Body Paragraph**:
-          This paragraph gives a summary of your background and critical skills (hard skills) that make you qualified for the position.
+          This paragraph (dosen't exceed 50 words) and gives a summary of your background and critical skills (hard skills) that make you qualified for the position.
           This paragraph can be used to demonstrate your persuasive skills (soft skills).
+           
 
       3. **Closing Paragraph**:
-        At the end of the letter talk about your availability for the job, where you can be contacted, and when you are going to contact the hiring person for an appointment to discuss your application. If you have no contact name you may simply want to indicate your anticipation for a response in this part of the letter. Thank the person to whom you are writing for his/her time and consideration of your application.
+        At the end of the letter (dosen't exceed 50 words) talk about your availability for the job, where you can be contacted, and when you are going to contact the hiring person for an appointment to discuss your application. If you have no contact name you may simply want to indicate your anticipation for a response in this part of the letter. Thank the person to whom you are writing for his/her time and consideration of your application.
+      
 
       **User information:**
       {user}
 
       **Job information:**
       {job}
+
+      ## Style guideline:
+        Avoid overused buzzwords, filler phrases, clichés, and flowery language. Focus on delivering the information in a concise and natural tone without unnecessary embellishments, jargon, or redundant phrases.
+      
+      ## some strict:
+      each paragraph doesn't exceed 40 to 60 words . 
     """
 
     # Request to Groq API to generate the cover letter
@@ -47,26 +55,24 @@ def generate_cover_letter_parts(user_job_json: dict) -> dict:
 
     content = response.choices[0].message.content.strip()
 
-    # Remove the "Opening Paragraph", "Body Paragraph", and "Closing Paragraph" labels
-    content = re.sub(r"\*\*.*?Paragraph:\*\*", "", content).strip()
-
-    # Split the content into paragraphs and clean them
+    # Split by double newlines (paragraphs)
     paragraphs = [p.strip() for p in content.split("\n\n") if p.strip()]
 
-    # Ensure we have exactly 3 paragraphs (opening, body, closing)
-    if len(paragraphs) < 3:
-        raise ValueError("The generated cover letter doesn't contain all required sections.")
+    # Remove the first line if it's an intro like "Here's a cover letter..."
+    if "cover letter" in paragraphs[0].lower():
+        paragraphs = paragraphs[1:]
 
-    # Clean up each paragraph (strip whitespace)
-    opening = paragraphs[1].strip()
-    body = paragraphs[2].strip()
-    closing = paragraphs[3].strip()
+    # Remove any bolded headers like "**Opening Paragraph**"
+    cleaned_paragraphs = [re.sub(r"\*\*.*?\*\*", "", p).strip() for p in paragraphs]
 
-    # Return the result in a structure that the API expects
-    return {
-        "merged_cover_letter": f"{opening}\n\n{body}\n\n{closing}"
-    }
+    # Ensure we still have exactly 3 paragraphs
+    if len(cleaned_paragraphs) != 3:
+        raise ValueError("The cleaned cover letter doesn't contain all required sections.")
 
+    # Merge them into one string
+    final_text = "\n".join(cleaned_paragraphs)
+
+    return cleaned_paragraphs, final_text
 
 """
 Result for sample Input:
@@ -78,3 +84,29 @@ Result for sample Input:
   Thank you for considering my application for the Senior Full-Stack Developer position at TechInnovate. I am excited about the opportunity to discuss my qualifications further and learn more about your team's work. I can be reached at emma.wilson@example.com or +1 415 555 0199. I would appreciate the opportunity to schedule an appointment to meet and discuss my application. I look forward to hearing from you soon and learning about the next steps in the process. Thank you again for your time and consideration."
 
 """
+
+
+if __name__ == "__main__":
+    # Define the path to the JSON input file
+    input_file_path = "data/sampleinput.json"
+
+    # Check if file exists
+    if not os.path.exists(input_file_path):
+        raise FileNotFoundError(f"Input file '{input_file_path}' not found!")
+
+    # Load the JSON data
+    with open(input_file_path, "r", encoding="utf-8") as file:
+        user_job_json = json.load(file)
+
+    try:
+        # Generate the cover letter
+        result, text = generate_cover_letter_parts(user_job_json)
+
+        # Print the generated cover letter
+        print("\nGenerated Cover Letter:\n")
+        print(result)
+        print("text : \n")
+        print(text)
+
+    except Exception as e:
+        print(f"Error: {e}")
